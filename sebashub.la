@@ -1,0 +1,185 @@
+--=== GUI CREATION ===--
+local ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+ScreenGui.Name = "BrainrotGUI"
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 250, 0, 320)
+MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+MainFrame.Visible = true
+
+local UICorner = Instance.new("UICorner", MainFrame)
+UICorner.CornerRadius = UDim.new(0,10)
+
+local CloseBtn = Instance.new("TextButton", MainFrame)
+CloseBtn.Size = UDim2.new(0,25,0,25)
+CloseBtn.Position = UDim2.new(1,-30,0,5)
+CloseBtn.Text = "X"
+CloseBtn.BackgroundColor3 = Color3.fromRGB(150,0,0)
+Instance.new("UICorner", CloseBtn)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+local OpenBtn = Instance.new("TextButton", ScreenGui)
+OpenBtn.Size = UDim2.new(0,100,0,40)
+OpenBtn.Position = UDim2.new(0.05,0,0.1,0)
+OpenBtn.Text = "OPEN"
+OpenBtn.BackgroundColor3 = Color3.fromRGB(0,120,255)
+Instance.new("UICorner", OpenBtn)
+
+OpenBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+end)
+
+--=== PLAYER ===--
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hum = char:WaitForChild("Humanoid")
+
+--=== ANTI-HIT ===--
+local AntiHitEnabled = false
+
+local function enableAntiHit()
+    if AntiHitEnabled then return end
+    AntiHitEnabled = true
+    hum.HealthChanged:Connect(function()
+        if AntiHitEnabled then
+            hum.Health = hum.MaxHealth
+        end
+    end)
+end
+
+local function disableAntiHit()
+    AntiHitEnabled = false
+end
+
+-- Botón Anti-Hit
+local AntiHitBtn = Instance.new("TextButton", MainFrame)
+AntiHitBtn.Size = UDim2.new(0,200,0,35)
+AntiHitBtn.Position = UDim2.new(0,25,0,40)
+AntiHitBtn.Text = "ANTI HIT: OFF"
+AntiHitBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+Instance.new("UICorner", AntiHitBtn)
+
+AntiHitBtn.MouseButton1Click:Connect(function()
+    AntiHitEnabled = not AntiHitEnabled
+    if AntiHitEnabled then
+        AntiHitBtn.Text = "ANTI HIT: ON"
+        enableAntiHit()
+    else
+        AntiHitBtn.Text = "ANTI HIT: OFF"
+        disableAntiHit()
+    end
+end)
+
+--=== SPEED SELECTOR ===--
+local SpeedLabel = Instance.new("TextLabel", MainFrame)
+SpeedLabel.Size = UDim2.new(0,200,0,25)
+SpeedLabel.Position = UDim2.new(0,25,0,90)
+SpeedLabel.Text = "Speed:"
+SpeedLabel.BackgroundTransparency = 1
+
+local SpeedBox = Instance.new("TextBox", MainFrame)
+SpeedBox.Size = UDim2.new(0,200,0,35)
+SpeedBox.Position = UDim2.new(0,25,0,120)
+SpeedBox.PlaceholderText = "Ej: 10, 20, 30..."
+SpeedBox.BackgroundColor3 = Color3.fromRGB(60,60,60)
+Instance.new("UICorner", SpeedBox)
+
+SpeedBox.FocusLost:Connect(function()
+    local num = tonumber(SpeedBox.Text)
+    if num then
+        hum.WalkSpeed = num
+    end
+end)
+
+--=== JUMP SELECTOR ===--
+local JumpLabel = Instance.new("TextLabel", MainFrame)
+JumpLabel.Size = UDim2.new(0,200,0,25)
+JumpLabel.Position = UDim2.new(0,25,0,165)
+JumpLabel.Text = "Jump:"
+JumpLabel.BackgroundTransparency = 1
+
+local JumpBox = Instance.new("TextBox", MainFrame)
+JumpBox.Size = UDim2.new(0,200,0,35)
+JumpBox.Position = UDim2.new(0,25,0,195)
+JumpBox.PlaceholderText = "Ej: 10, 20, 30..."
+JumpBox.BackgroundColor3 = Color3.fromRGB(60,60,60)
+Instance.new("UICorner", JumpBox)
+
+JumpBox.FocusLost:Connect(function()
+    local num = tonumber(JumpBox.Text)
+    if num then
+        hum.JumpPower = num
+    end
+end)
+
+--=== AIMBOT ===--
+local AimbotEnabled = false
+
+local function getClosestPlayer()
+    local closest
+    local shortest = math.huge
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (char.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+            if dist < shortest then
+                shortest = dist
+                closest = plr
+            end
+        end
+    end
+    return closest
+end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if AimbotEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character then
+            workspace.CurrentCamera.CFrame = CFrame.new(
+                workspace.CurrentCamera.CFrame.Position,
+                target.Character.HumanoidRootPart.Position
+            )
+        end
+    end
+end)
+
+-- Botón Aimbot
+local AimbotBtn = Instance.new("TextButton", MainFrame)
+AimbotBtn.Size = UDim2.new(0,200,0,35)
+AimbotBtn.Position = UDim2.new(0,25,0,240)
+AimbotBtn.Text = "AIMBOT: OFF"
+AimbotBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+Instance.new("UICorner", AimbotBtn)
+
+AimbotBtn.MouseButton1Click:Connect(function()
+    AimbotEnabled = not AimbotEnabled
+    AimbotBtn.Text = AimbotEnabled and "AIMBOT: ON" or "AIMBOT: OFF"
+end)
+
+--=== ADMIN COMMANDS ===--
+local Admins = {player.Name} -- solo tú
+
+local CMDBOX = Instance.new("TextBox", MainFrame)
+CMDBOX.Size = UDim2.new(0,200,0,30)
+CMDBOX.Position = UDim2.new(0,25,0,285)
+CMDBOX.PlaceholderText = "Admin command..."
+CMDBOX.BackgroundColor3 = Color3.fromRGB(80,80,80)
+Instance.new("UICorner", CMDBOX)
+
+CMDBOX.FocusLost:Connect(function()
+    local cmd = CMDBOX.Text:lower()
+
+    if table.find(Admins, player.Name) then
+        if cmd == "speed reset" then hum.WalkSpeed = 16 end
+        if cmd == "jump reset" then hum.JumpPower = 50 end
+        if cmd == "fly" then hum:ChangeState(Enum.HumanoidStateType.Flying) end
+        if cmd == "kill all" then
+            for _,p in pairs(game.Players:GetPlayers()) do
+                if p.Character then p.Character.Humanoid.Health = 0 end
+            end
+        end
+    end
+end)
